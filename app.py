@@ -6,7 +6,7 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 # CONFIGURATION: Pull connection secrets safely or fallback to your raw URI
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Kobibi09@$$@db.nxgduobaryxomauktmcu.supabase.co:5432/postgres')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Kobibi09%40%24%24@db.nxgduobaryxomauktmcu.supabase.co:5432/postgres')
 
 def get_db_connection():
     # Establishes a raw transactional bridge to your Supabase PostgreSQL engine
@@ -38,7 +38,7 @@ def get_vault_data(niche_id):
             }), 404
             
     except Exception as e:
-        return jsonify({"status": "ERROR", "message": "Database query connection timeout exception."}), 500
+        return jsonify({"status": "ERROR", "message": f"Database error: {str(e)}"}), 500
     finally:
         if conn:
             conn.close()
