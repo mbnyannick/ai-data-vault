@@ -13,6 +13,42 @@ def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
     return conn
 
+# ============================================================
+# NEW ROUTE: llms.txt for AI Agent Discovery
+# ============================================================
+@app.route('/llms.txt', methods=['GET'])
+def get_llms_txt():
+    content = """# AI Data Gateway
+
+> A premium, pay-per-request API providing real-time and compliance-focused data on logistics, real estate, healthcare, and finance sectors.
+
+## API Reference
+- [Developer Portal & Pricing](https://ai-data-gateway-main-8608995.zuplo.site): Sign up for an API key and view full documentation.
+- [Logistics Data Endpoint](https://ai-data-gateway-main-8608995.d2.zuplo.dev/mcp/logistics-niche-450): Example for logistics telemetry.
+- [Real Estate Data Endpoint](https://ai-data-gateway-main-8608995.d2.zuplo.dev/mcp/realestate-niche-1): Example for real estate zoning codes.
+
+## Overview
+This API provides structured data for AI agents operating in the following verticals:
+- Cross-border supply chain logistics (wait times, port codes, lane status)
+- Real estate zoning and permitting (building codes, height restrictions)
+- Healthcare billing and compliance (ICD-10, CPT codes, HIPAA logs)
+- Financial compliance (SEC filings, ISO controls, ESG tax credits)
+- Transportation telemetry (drone airspace, commercial fleet maintenance)
+
+## Getting Started
+1. Visit the Developer Portal above
+2. Subscribe to the "Pay as you go" plan ($0.01 per request)
+3. Get your API key
+4. Make requests to any /mcp/{niche} endpoint
+
+## Example Request
+curl -H "Authorization: Bearer YOUR_API_KEY" "https://ai-data-gateway-main-8608995.d2.zuplo.dev/mcp/logistics-niche-450"
+"""
+    return content, 200, {'Content-Type': 'text/plain'}
+
+# ============================================================
+# MAIN API ROUTE: Dynamic Data Access
+# ============================================================
 @app.route('/mcp/<niche_id>', methods=['GET'])
 def get_vault_data(niche_id):
     conn = None
