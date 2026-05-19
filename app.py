@@ -26,8 +26,8 @@ def get_llms_txt():
 
 ## API Reference
 - [Developer Portal & Pricing](https://aiapi-main-b378d28.zuplo.site): Sign up for an API key and view full documentation.
-- [Logistics Data Example](https://aiapi-main-b378d28.zuplo.app/mcp/450): Example for logistics telemetry.
-- [Real Estate Data Example](https://aiapi-main-b378d28.zuplo.app/mcp/1): Example for real estate zoning codes.
+- [Logistics Data Example](https://aiapi-main-b378d28.zuplo.app/mcp/logistics-niche-1): Example for logistics telemetry.
+- [Healthcare Data Example](https://aiapi-main-b378d28.zuplo.app/mcp/healthcare-niche-1): Example for healthcare compliance data.
 
 ## Overview
 This API provides structured data for AI agents operating in the following verticals:
@@ -44,7 +44,7 @@ This API provides structured data for AI agents operating in the following verti
 4. Make requests to any /mcp/{niche_id} endpoint
 
 ## Example Request
-curl -H "Authorization: Bearer YOUR_API_KEY" "https://aiapi-main-b378d28.zuplo.app/mcp/450"
+curl -H "Authorization: Bearer YOUR_API_KEY" "https://aiapi-main-b378d28.zuplo.app/mcp/logistics-niche-1"
 """
     return content, 200, {'Content-Type': 'text/plain'}
 
