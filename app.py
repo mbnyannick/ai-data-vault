@@ -1,7 +1,7 @@
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -10,6 +10,8 @@ DATABASE_URL = os.environ.get(
     'DATABASE_URL',
     'postgresql://postgres:Kobibi09%40%24%24@db.nxgduobaryxomauktmcu.supabase.co:6543/postgres'
 )
+
+VALID_CATEGORIES = ["logistics", "healthcare", "realestate", "finance"]
 
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
@@ -37,30 +39,92 @@ This API provides structured data for AI agents operating in the following verti
 - Financial compliance (SEC filings, ISO controls, ESG tax credits)
 - Transportation telemetry (drone airspace, commercial fleet maintenance)
 
+## Available Categories
+- GET /mcp/logistics       — List all logistics niche IDs
+- GET /mcp/healthcare      — List all healthcare niche IDs
+- GET /mcp/realestate      — List all real estate niche IDs
+- GET /mcp/finance         — List all finance niche IDs
+- GET /mcp/{niche_id}      — Get full data for a specific niche ID
+
 ## Getting Started
 1. Visit the Developer Portal above
-2. Subscribe to the "Pay as you go" plan ($0.01 per request)
+2. Subscribe to a plan
 3. Get your API key
-4. Make requests to any /mcp/{niche_id} endpoint
+4. Browse a category, pick a niche ID, then fetch its data
 
-## Example Request
+## Example Requests
+curl -H "Authorization: Bearer YOUR_API_KEY" "https://aiapi-main-b378d28.zuplo.app/mcp/logistics"
 curl -H "Authorization: Bearer YOUR_API_KEY" "https://aiapi-main-b378d28.zuplo.app/mcp/logistics-niche-1"
 """
     return content, 200, {'Content-Type': 'text/plain'}
 
 
 # ============================================================
-# MAIN API ROUTE: Dynamic Niche Data Lookup
+# CATEGORY LISTING ROUTES
 # ============================================================
-@app.route('/mcp/<niche_id>', methods=['GET'])
+@app.route('/mcp/<category>', methods=['GET'])
+def list_category(category):
+    if category not in VALID_CATEGORIES:
+        # Not a category — fall through to niche lookup
+        return get_vault_data(category)
+
+    conn = None
+    try:
+        limit  = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+
+        # Cap limit at 100 to prevent abuse
+        if limit > 100:
+            limit = 100
+
+        conn = get_db_connection()
+        cur  = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get total count
+        cur.execute("SELECT COUNT(*) FROM niches WHERE category = %s;", (category,))
+        total = cur.fetchone()["count"]
+
+        # Get paginated list
+        cur.execute(
+            """
+            SELECT id, niche, created_at
+            FROM niches
+            WHERE category = %s
+            ORDER BY id
+            LIMIT %s OFFSET %s;
+            """,
+            (category, limit, offset)
+        )
+        rows = cur.fetchall()
+        cur.close()
+
+        return jsonify({
+            "status":   "SUCCESS",
+            "category": category,
+            "total":    total,
+            "limit":    limit,
+            "offset":   offset,
+            "results":  rows
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "ERROR", "message": f"Database error: {str(e)}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# SINGLE NICHE LOOKUP: GET /mcp/{niche_id}
+# ============================================================
 def get_vault_data(niche_id):
     conn = None
     try:
         conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur  = conn.cursor(cursor_factory=RealDictCursor)
 
         cur.execute(
-            "SELECT niche, telemetry_data, mcp_context FROM niches WHERE id = %s;",
+            "SELECT niche, category, telemetry_data, mcp_context FROM niches WHERE id = %s;",
             (niche_id,)
         )
         tool_data = cur.fetchone()
@@ -72,7 +136,7 @@ def get_vault_data(niche_id):
             return jsonify(response), 200
         else:
             return jsonify({
-                "status": "ERROR",
+                "status":  "ERROR",
                 "message": f"Niche identifier '{niche_id}' not found in the 400,000 active master registry."
             }), 404
 
@@ -81,6 +145,11 @@ def get_vault_data(niche_id):
     finally:
         if conn:
             conn.close()
+
+
+@app.route('/mcp/<niche_id>', methods=['GET'])
+def niche_lookup(niche_id):
+    return get_vault_data(niche_id)
 
 
 # ============================================================
